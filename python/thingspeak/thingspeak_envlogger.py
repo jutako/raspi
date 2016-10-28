@@ -130,11 +130,13 @@ def main():
         #temp = random.random()
         #hum = 10 * random.random()
         
-        [temp, hum] = grovepi.dht(sensor, 1) #the white version  
+        [temp, hum] = grovepi.dht(4, 1) #D4 input, the white version  
         print("temp = %.02f C humidity =%.02f%%"%(temp, hum))        
         
-        sendData(THINGSPEAKURL,THINGSPEAKKEY,temp,hum)
-        sys.stdout.flush()
+        if (-40 < temp) & (temp < 50) & (0 < hum) & (hum < 100):
+			sendData(THINGSPEAKURL,THINGSPEAKKEY,temp,hum)
+			sys.stdout.flush()
+		
         time.sleep(60)
 
         # Toggle LED while we wait for next reading
