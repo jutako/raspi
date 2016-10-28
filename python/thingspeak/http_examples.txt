@@ -1,0 +1,7 @@
+
+
+Post data:
+https://api.thingspeak.com/update.json?key=VEHKJKJXTZBYLMVC&field1=17&field2=50
+
+Get data:
+https://api.thingspeak.com/channels/115121/feeds.json?key=VEHKJKJXTZBYLMVC

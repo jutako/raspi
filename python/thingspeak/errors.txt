@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "thingspeak_test.py", line 146, in <module>
+    main()
+  File "thingspeak_test.py", line 131, in main
+    sendData(THINGSPEAKURL,THINGSPEAKKEY,temp,hum)
+  File "thingspeak_test.py", line 73, in sendData
+    log = log + 'Server could not fulfill the request. Error code: ' + e.code
+TypeError: cannot concatenate 'str' and 'int' objects
+
