@@ -1,4 +1,7 @@
 #!/usr/bin/python
+
+# Modified from:
+
 #--------------------------------------
 #    ___  ___  _ ____
 #   / _ \/ _ \(_) __/__  __ __
@@ -16,30 +19,25 @@
 # http://www.raspberrypi-spy.co.uk/
 #
 #--------------------------------------
+
 #import smbus
 import time
 import os
 import sys
 import urllib            # URL functions
 import urllib2           # URL functions
-import random
-import grovepi
-
-#import bmp180            # Sensor library
-#import RPi.GPIO as GPIO  # GPIO library
+import random #for testing
+import grovepi #for Grove sensors
 
 ################# Default Constants #################
 # These can be changed if required
-DEVICE        = 0x77 # Default device I2C address
-SMBUSID       = 1    # Rev 2 Pi uses 1, Rev 1 uses 0
-LEDGPIO       = 17   # GPIO for LED
-SWITCHGPIO    = 22   # GPIO for switch
-INTERVAL      = 0.25    # Delay between each reading (mins)
 AUTOSHUTDOWN  = 1    # Set to 1 to shutdown on switch
 THINGSPEAKKEY = 'VEHKJKJXTZBYLMVC'
 THINGSPEAKURL = 'https://api.thingspeak.com/update'
+LOGFILE = '/home/pi/log/thingspeak_envlogger.txt'
 #####################################################
 
+"""
 def switchCallback(channel):
 
     global AUTOSHUTDOWN
@@ -48,11 +46,14 @@ def switchCallback(channel):
     if AUTOSHUTDOWN==1:
         os.system('/sbin/shutdown -h now')
         sys.exit(0)
+"""
 
 def sendData(url,key,temp,hum):
     """
     Send event to internet site
     """
+    
+    global LOGFILE
 
     values = {'api_key' : key, 'field1' : temp, 'field2' : hum}
 
@@ -71,64 +72,48 @@ def sendData(url,key,temp,hum):
         log = log + 'Update ' + html_string
 
     except urllib2.HTTPError, e:
-        log = log + 'Server could not fulfill the request. Error code: ' + e.code
+        log = log + 'Server could not fulfill the request. Error code: ' + str(e.code)
+        
+        """
+        Traceback (most recent call last):
+		  File "thingspeak_test.py", line 146, in <module>
+			main()
+		  File "thingspeak_test.py", line 131, in main
+			sendData(THINGSPEAKURL,THINGSPEAKKEY,temp,hum)
+		  File "thingspeak_test.py", line 73, in sendData
+			log = log + 'Server could not fulfill the request. Error code: ' + e.code
+		TypeError: cannot concatenate 'str' and 'int' objects
+        """
+        
     except urllib2.URLError, e:
-        log = log + 'Failed to reach server. Reason: ' + e.reason
+        log = log + 'Failed to reach server. Reason: ' + str(e.reason)
+        """
+        TODO: Find a way to avoid this: 
+        
+        Traceback (most recent call last):
+		File "thingspeak_envlogger.py", line 153, in <module>
+		main()
+		File "thingspeak_envlogger.py", line 137, in main
+		sendData(THINGSPEAKURL,THINGSPEAKKEY,temp,hum)
+		File "thingspeak_envlogger.py", line 76, in sendData
+		log = log + 'Failed to reach server. Reason: ' + e.reason
+		TypeError: cannot concatenate 'str' and 'gaierror' objects
+		"""
+        
     except:
         log = log + 'Unknown error'
 
     print log
+    
+    with open(LOGFILE, 'a') as file:
+		file.write(log + '\n')
 
 def main():
 
-    global DEVICE
-    global SMBUSID
-    global LEDGPIO
-    global SWITCHGPIO
-    global INTERVAL
-    global AUTOSHUTDOWN
     global THINGSPEAKKEY
     global THINGSPEAKURL
 
-    # Check if config file exists and overwrite
-    # default constants with new values
-    if os.path.isfile('/boot/templogger.cfg')==True:
-        print "Found templogger.cfg"
-        f = open('/boot/templogger.cfg','r')
-        data = f.read().splitlines()
-        f.close()
-        if data[0]=='Temp Logger':
-            print "Using templogger.cfg"
-            DEVICE        = int(data[1],16)
-            SMBUSID       = int(data[2])
-            LEDGPIO       = int(data[3])
-            SWITCHGPIO    = int(data[4])
-            INTERVAL      = int(data[5])
-            AUTOSHUTDOWN  = int(data[6])
-            THINGSPEAKKEY = data[7]
-            THINGSPEAKURL = data[8]
-
-
-    # Setup GPIO
-    '''
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setwarnings(False)
-    # LED on GPIO17
-    GPIO.setup(LEDGPIO , GPIO.OUT)
-    # Switch on GPIO22 as input pulled LOW by default
-    GPIO.setup(SWITCHGPIO, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-    # Define what function to call when switch pressed
-    GPIO.add_event_detect(SWITCHGPIO, GPIO.RISING, callback=switchCallback)
-
-    bus = smbus.SMBus(SMBUSID)
-    '''
-
-    #try:
     while True:
-        #GPIO.output(LEDGPIO, True)
-        #(temperature,pressure)=bmp180.readBmp180(DEVICE)
-        #temp = random.random()
-        #hum = 10 * random.random()
         
         [temp, hum] = grovepi.dht(4, 1) #D4 input, the white version  
         print("temp = %.02f C humidity =%.02f%%"%(temp, hum))        
@@ -138,15 +123,6 @@ def main():
 			sys.stdout.flush()
 		
         time.sleep(60)
-
-        # Toggle LED while we wait for next reading
-        #for i in range(0,INTERVAL*60):
-        #GPIO.output(LEDGPIO, not GPIO.input(LEDGPIO))
-        #time.sleep(1)
-
-    #except :
-        # Reset GPIO settings
-        #GPIO.cleanup()
 
 
 if __name__=="__main__":
