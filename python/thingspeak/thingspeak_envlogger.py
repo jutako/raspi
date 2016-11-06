@@ -28,12 +28,15 @@ import urllib            # URL functions
 import urllib2           # URL functions
 import random #for testing
 import grovepi #for Grove sensors
+import Adafruit_DHT #for DHT11 sensor
 
 ################# Default Constants #################
 # These can be changed if required
 AUTOSHUTDOWN  = 1    # Set to 1 to shutdown on switch
 THINGSPEAKKEY = 'VEHKJKJXTZBYLMVC'
 THINGSPEAKURL = 'https://api.thingspeak.com/update'
+DHT_SENSOR = 11 #DHT 11 sensor submodel
+DHT_PIN = 4 #DHT 11 sensor data GPIO pin
 LOGFILE = '/home/pi/log/thingspeak_envlogger.txt'
 #####################################################
 
@@ -48,14 +51,14 @@ def switchCallback(channel):
         sys.exit(0)
 """
 
-def sendData(url,key,temp,hum):
+def sendData(url, key, temp, hum, temp2, hum2):
     """
     Send event to internet site
     """
     
     global LOGFILE
 
-    values = {'api_key' : key, 'field1' : temp, 'field2' : hum}
+    values = {'api_key' : key, 'field1' : temp, 'field2' : hum, 'field3' : temp2, 'field4' : hum2}
 
     postdata = urllib.urlencode(values)
     req = urllib2.Request(url, postdata)
@@ -63,6 +66,8 @@ def sendData(url,key,temp,hum):
     log = time.strftime("%d-%m-%Y,%H:%M:%S") + ","
     log = log + "{:.1f}C".format(temp) + ","
     log = log + "{:.2f}%".format(hum) + ","
+    log = log + "{:.1f}C".format(temp2) + ","
+    log = log + "{:.2f}%".format(hum2) + ","
 
     try:
         # Send data to Thingspeak
@@ -112,14 +117,33 @@ def main():
 
     global THINGSPEAKKEY
     global THINGSPEAKURL
+    
+    # initialize
+    hum2 = 0
+    temp2 = -100
 
     while True:
         
         [temp, hum] = grovepi.dht(4, 1) #D4 input, the white version  
         print("temp = %.02f C humidity =%.02f%%"%(temp, hum))        
         
+		# Try to grab a sensor reading.  Use the read_retry method which will retry up
+		# to 15 times to get a sensor reading (waiting 2 seconds between each retry).
+        hum2_old = hum2
+        temp2_old = temp2
+        hum2, temp2 = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
+        print("temp = %.02f C humidity =%.02f%%"%(temp2, hum2)) 
+
+		# Note that sometimes you won't get a reading and
+		# the results will be null (because Linux can't
+		# guarantee the timing of calls to read the sensor).
+		# If this happens try again!
+        if hum2 is None or temp2 is None:
+            hum2 = hum2_old
+            temp2 = temp2_old
+        
         if (-40 < temp) & (temp < 50) & (0 < hum) & (hum < 100):
-			sendData(THINGSPEAKURL,THINGSPEAKKEY,temp,hum)
+			sendData(THINGSPEAKURL, THINGSPEAKKEY, temp, hum, temp2, hum2)
 			sys.stdout.flush()
 		
         time.sleep(60)
@@ -127,3 +151,7 @@ def main():
 
 if __name__=="__main__":
     main()
+
+
+
+
