@@ -17,7 +17,6 @@
 # Date   : 20/06/2015
 #
 # http://www.raspberrypi-spy.co.uk/
-#
 #--------------------------------------
 
 #import smbus
@@ -33,7 +32,7 @@ import Adafruit_DHT #for DHT11 and DHT22 sensors
 ################# Default Constants #################
 # These can be changed if required
 AUTOSHUTDOWN  = 1    # Set to 1 to shutdown on switch
-THINGSPEAKKEY = 'WUKJPVAXWTTYQTFM'
+THINGSPEAKKEY = 'WUKJPVAXWTTYQTFM' #channel: ""
 THINGSPEAKURL = 'https://api.thingspeak.com/update'
 DHT_SENSOR = 22 #DHT 11 sensor submodel
 DHT_PIN = 4 #DHT 11 sensor data GPIO pin
