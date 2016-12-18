@@ -20,8 +20,9 @@
 #--------------------------------------
 
 # TODO:
-# * print to log and save log to cloud
-# * save pictures to cloud
+# * make log machine readable
+# * make a more verbose human readable log as well
+# * save pictures and log to cloud
 
 #import smbus
 import time
