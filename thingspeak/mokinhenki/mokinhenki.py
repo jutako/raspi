@@ -40,13 +40,16 @@ from picamera import PiCamera #for camera
 
 ################# Default Constants #################
 # These can be changed if required
+OUTPATH = '/home/pi/data/mokinhenki'
+OUTPATH_FIG = os.path.join(OUTPATH, 'figs')
+LOGFILE = os.path.join(OUTPATH, 'log_mokinhenki.txt')
+
 AUTOSHUTDOWN  = 1    # Set to 1 to shutdown on switch
 THINGSPEAKKEY = 'WUKJPVAXWTTYQTFM' #channel: ""
 THINGSPEAKURL = 'https://api.thingspeak.com/update'
 
-LOGFILE = '/home/pi/log/thingspeak_mokki.txt'
-
 PIN_PIR = 12 #PIR detector data GPIO pin
+
 DHT_SENSOR = 22 #DHT 11 sensor submodel
 PIN_DHT22 = 16 #DHT sensor data GPIO pin
 TEMPHUM_INTERVAL_SEC = 30 #how often measurement values are read and sent to thingspeak
@@ -158,7 +161,7 @@ def main():
             
             ts = time.time()
             tstr = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M-%S')
-            fname = "/home/pi/figs/pirimage_%s.jpg" % (tstr)
+            fname = os.path.join(OUTPATH_FIG, "pirimage_%s.jpg" % (tstr))
             
             camera.capture(fname)
             time.sleep(3) #sleep until PIR is ready again
@@ -167,14 +170,14 @@ def main():
 
         # Take picture based on time of day
         curts = time.localtime()
-        if (curts[3]==14) & (curts[4]==25) & (day_pic_taken != True):
+        if (curts[3]==12) & (curts[4]==0) & (day_pic_taken != True):
             ts = time.time()
             tstr = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M-%S')
-            fname = "/home/pi/figs/dayimage_%s.jpg" % (tstr)
+            fname = os.path.join(OUTPATH_FIG, "dayimage_%s.jpg" % (tstr))
             camera.capture(fname)
             day_pic_taken = True
 
-        if (curts[3]==14) & (curts[4]==26):
+        if (curts[3]==12) & (curts[4]==1):
             day_pic_taken = False #reset flag
         
         
