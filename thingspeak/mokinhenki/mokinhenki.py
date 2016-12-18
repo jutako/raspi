@@ -19,26 +19,40 @@
 # http://www.raspberrypi-spy.co.uk/
 #--------------------------------------
 
+# TODO:
+# * print to log and save log to cloud
+# * save pictures to cloud
+
 #import smbus
 import time
+import datetime
 import os
 import sys
 import urllib            # URL functions
 import urllib2           # URL functions
 import random #for testing
-import grovepi #for Grove sensors
+#import grovepi #for Grove sensors
 import Adafruit_DHT #for DHT11 and DHT22 sensors
+import RPi.GPIO as GPIO #for PIR pin read
+from picamera import PiCamera #for camera 
+
+
 
 ################# Default Constants #################
 # These can be changed if required
 AUTOSHUTDOWN  = 1    # Set to 1 to shutdown on switch
 THINGSPEAKKEY = 'WUKJPVAXWTTYQTFM' #channel: ""
 THINGSPEAKURL = 'https://api.thingspeak.com/update'
-DHT_SENSOR = 22 #DHT 11 sensor submodel
-DHT_PIN = 4 #DHT 11 sensor data GPIO pin
+
 LOGFILE = '/home/pi/log/thingspeak_mokki.txt'
-SLEEP_TIME_SEC = 60 #how often measurement values are read and sent to thingspeak
+
+PIN_PIR = 12 #PIR detector data GPIO pin
+DHT_SENSOR = 22 #DHT 11 sensor submodel
+PIN_DHT22 = 16 #DHT sensor data GPIO pin
+TEMPHUM_INTERVAL_SEC = 30 #how often measurement values are read and sent to thingspeak
 #####################################################
+
+
 
 """
 def switchCallback(channel):
@@ -115,36 +129,84 @@ def main():
 
     global THINGSPEAKKEY
     global THINGSPEAKURL
-    
+
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setup(PIN_PIR, GPIO.IN)
+
+    camera = PiCamera()
+    camera.rotation = 180
+    camera.resolution =  (1024, 576)
+    day_pic_taken = False
+
+    #camera.start_preview()
+    #sleep(20)
+    #camera.stop_preview()
+
     # initialize
+    last_temphum_ts = time.time()
     hum2 = 0
     temp2 = -100
 
     while True:
-        
-        #[temp, hum] = grovepi.dht(4, 1) #D4 input, the white version  
-                
-        
-		# Try to grab a sensor reading.  Use the read_retry method which will retry up
-		# to 15 times to get a sensor reading (waiting 2 seconds between each retry).
-        hum2_old = hum2
-        temp2_old = temp2
-        hum2, temp2 = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
+
+        # Take picture based on PIR
+        if (GPIO.input(PIN_PIR)):
+            #print("Taking a picture...")
+            #camera.start_preview()
             
-		# Note that sometimes you won't get a reading and
-		# the results will be null (because Linux can't
-		# guarantee the timing of calls to read the sensor).
-		# If this happens try again!
-        if hum2 is None or temp2 is None:
-            hum2 = hum2_old
-            temp2 = temp2_old
+            time.sleep(0.2) #wait for the object to move fully into frame
+            
+            ts = time.time()
+            tstr = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M-%S')
+            fname = "/home/pi/figs/pirimage_%s.jpg" % (tstr)
+            
+            camera.capture(fname)
+            time.sleep(3) #sleep until PIR is ready again
+            #camera.stop_preview()
+
+
+        # Take picture based on time of day
+        curts = time.localtime()
+        if (curts[3]==14) & (curts[4]==25) & (day_pic_taken != True):
+            ts = time.time()
+            tstr = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M-%S')
+            fname = "/home/pi/figs/dayimage_%s.jpg" % (tstr)
+            camera.capture(fname)
+            day_pic_taken = True
+
+        if (curts[3]==14) & (curts[4]==26):
+            day_pic_taken = False #reset flag
         
-        if all(x is not None for x in [temp2, hum2]) & (-40 < temp2) & (temp2 < 50) & (0 < hum2) & (hum2 < 100):
-			print("temp = %.02f C humidity =%.02f%%"%(temp2, hum2))
-			sendData(THINGSPEAKURL, THINGSPEAKKEY, temp2, hum2)
-			sys.stdout.flush()
-		
-        time.sleep(SLEEP_TIME_SEC)
+        
+        # Log temperature and humidity
+        if (time.time() - last_temphum_ts) > TEMPHUM_INTERVAL_SEC:
+            
+            #[temp, hum] = grovepi.dht(4, 1) #D4 input, the white version          
+            
+            # Try to grab a sensor reading.  Use the read_retry method which will retry up
+            # to 15 times to get a sensor reading (waiting 2 seconds between each retry).
+            hum2_old = hum2
+            temp2_old = temp2
+            hum2, temp2 = Adafruit_DHT.read_retry(DHT_SENSOR, PIN_DHT22)
+                
+            # Note that sometimes you won't get a reading and
+            # the results will be null (because Linux can't
+            # guarantee the timing of calls to read the sensor).
+            # If this happens try again!
+            if hum2 is None or temp2 is None:
+                hum2 = hum2_old
+                temp2 = temp2_old
+            
+            if all(x is not None for x in [temp2, hum2]) & (-40 < temp2) & (temp2 < 50) & (0 < hum2) & (hum2 < 100):
+                            print("temp = %.02f C humidity =%.02f%%"%(temp2, hum2))
+                            sendData(THINGSPEAKURL, THINGSPEAKKEY, temp2, hum2)
+                            sys.stdout.flush()
+                            last_temphum_ts = time.time()
+
+
+   
+	
+        time.sleep(0.5) #for the while loop
 
 
 if __name__=="__main__":
