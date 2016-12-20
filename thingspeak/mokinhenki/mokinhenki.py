@@ -29,9 +29,17 @@ import time
 import datetime
 import os
 import sys
+import glob #to get lists of files etc.
 import urllib            # URL functions
 import urllib2           # URL functions
 import random #for testing
+
+# Modules for building email
+from email.mime.text import MIMEText
+from email.mime.image import MIMEImage
+from email.mime.multipart import MIMEMultipart
+import smtplib #for sending email
+
 #import grovepi #for Grove sensors
 import Adafruit_DHT #for DHT11 and DHT22 sensors
 import RPi.GPIO as GPIO #for PIR pin read
@@ -44,6 +52,10 @@ from picamera import PiCamera #for camera
 OUTPATH = '/home/pi/data/mokinhenki'
 OUTPATH_FIG = os.path.join(OUTPATH, 'figs')
 LOGFILE = os.path.join(OUTPATH, 'log_mokinhenki.txt')
+
+from_email = 'jussitapiokorpela@gmail.com' #seems to make no difference what this is...
+to_email = ['jussi.korpela@ttl.fi', 'jussitapiokorpela@gmail.com']
+app_token_file = '/home/pi/private/google_app_token'
 
 AUTOSHUTDOWN  = 1    # Set to 1 to shutdown on switch
 THINGSPEAKKEY = 'WUKJPVAXWTTYQTFM' #channel: ""
@@ -129,6 +141,28 @@ def sendData(url, key, temp, hum):
     with open(LOGFILE, 'a') as file:
 		file.write(log + '\n')
 
+
+""" Create a multipart MIME message that can hold both text and images. """
+def createMultipartEMail(from_email, to_email, subjectline, message):
+    msg = MIMEMultipart()
+    msg['Subject'] = subjectline
+    msg['From'] = from_email
+    msg['To'] = ",".join(to_email)
+    msg['Date'] = formatdate(localtime=True)
+    msg.attach(MIMEText(message))
+
+
+""" Sends email using smtp.gmail.com. Authentication needs an App token since I use two-factor authentication. 
+    App token needs to be provided, since I do not dare to hard code it into this public code."""
+def sendGMail(msg, google_app_token):
+	server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+	status[0] = server.login('jussitapiokorpela@gmail.com', google_app_token)
+	status[1] = server.sendmail(msg['from'], msg['to'], msg.as_string())
+	server.quit()
+	return status
+
+
+""" Main program """
 def main():
 
     global THINGSPEAKKEY
@@ -151,6 +185,12 @@ def main():
     hum2 = 0
     temp2 = -100
 
+    # Load google app token from file
+    fp = open(app_token_file, 'r')
+    app_token = fp.readline()
+    app_token = app_token[0:-1] #remove \n
+    fp.close()
+
     while True:
 
         # Take picture based on PIR
@@ -165,7 +205,22 @@ def main():
             fname = os.path.join(OUTPATH_FIG, "pirimage_%s.jpg" % (tstr))
             
             camera.capture(fname)
-            time.sleep(3) #sleep until PIR is ready again
+
+            # Create email
+            msg = createMultipartEMail(from_email, to_email,
+                    'Mokinhenki tiedottaa: liiketunnistin lauennut',
+                    'Liiketunnistimeni laukesi. Ohessa kuva.')
+            
+            # Attach image
+            fp = open(fname, 'rb')
+            img = MIMEImage(fp.read())
+            fp.close()
+            msg.attach(img)
+
+            # Send using gmail
+            status = sendGMail(msg, app_token)
+
+            #time.sleep(3) #sleep until PIR is ready again
             #camera.stop_preview()
 
 
