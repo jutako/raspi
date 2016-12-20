@@ -1,4 +1,5 @@
 #!/usr/bin/python
+# -*- coding: utf-8 -*-
 
 # Modified from:
 
@@ -69,7 +70,8 @@ PIN_PIR = 12 #PIR detector data GPIO pin
 
 DHT_SENSOR = 22 #DHT 11 sensor submodel
 PIN_DHT22 = 16 #DHT sensor data GPIO pin
-TEMPHUM_INTERVAL_SEC = 2*60 #how often measurement values are read and sent to thingspeak
+TEMPHUM_INTERVAL_SEC = 60 #how often measurement values are read and sent to thingspeak
+TEMPHUM_ALARM_INTERVAL_SEC = 60*60 #how often alarm emails are sent if alarm conditions persist
 #####################################################
 
 
@@ -190,8 +192,9 @@ def main():
     last_temphum_ts = time.time()
     hum = 0
     temp = -100
-    hum_hist = [None] * 5
-    temp_hist = [None] * 5
+    last_temphum_email_ts = time.time()
+    hum_hist = [HUM_ALARM_TH - 1] * 5
+    temp_hist = [TEMP_ALARM_TH + 1] * 5
 
     # Load google app token from file
     fp = open(app_token_file, 'r')
@@ -276,10 +279,10 @@ def main():
                             hum_hist.insert(0, hum)
 
                             # send email warning
-                            if (np.median(temp_hist) < TEMP_ALARM_TH) | (np.median(hum_hist) > HUM_ALARM_TH) & ((time.time() - last_temphum_ts) > 5*60):
+                            if (np.median(temp_hist) < TEMP_ALARM_TH) | (np.median(hum_hist) > HUM_ALARM_TH) & ((time.time() - last_temphum_email_ts) > TEMPHUM_ALARM_INTERVAL_SEC):
                                 msg = createMultipartEMail(from_email, to_email,
-                                'Mokinhenki tiedottaa: liian kylmää tai kosteaa',
-                                'Majassani on liian kylmää tai kosteaa. Lämpötila %2.1f C ja suht. kosteus %2.1f prosenttia. Tee jotain.' % (temp, hum) )
+                                'Mokinhenki tiedottaa: liian kylmaa tai kosteaa',
+                                'Majassani on liian kylmaa tai kosteaa. Lampotila on %2.1f astetta ja suht. kosteus %2.1f prosenttia. Tee jotain.' % (temp, hum) )
                                 status = sendGMail(msg, app_token)
                                 last_temphum_email_ts = time.time()
 
