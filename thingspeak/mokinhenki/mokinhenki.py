@@ -54,7 +54,7 @@ OUTPATH_FIG = os.path.join(OUTPATH, 'figs')
 LOGFILE = os.path.join(OUTPATH, 'log_mokinhenki.txt')
 
 from_email = 'jussitapiokorpela@gmail.com' #seems to make no difference what this is...
-to_email = ['jussi.korpela@ttl.fi', 'jussitapiokorpela@gmail.com']
+to_email = ['jussikorpela@hotmail.com']
 app_token_file = '/home/pi/private/google_app_token'
 
 AUTOSHUTDOWN  = 1    # Set to 1 to shutdown on switch
