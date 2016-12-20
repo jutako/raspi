@@ -53,7 +53,7 @@ PIN_PIR = 12 #PIR detector data GPIO pin
 
 DHT_SENSOR = 22 #DHT 11 sensor submodel
 PIN_DHT22 = 16 #DHT sensor data GPIO pin
-TEMPHUM_INTERVAL_SEC = 30 #how often measurement values are read and sent to thingspeak
+TEMPHUM_INTERVAL_SEC = 2*60 #how often measurement values are read and sent to thingspeak
 #####################################################
 
 
