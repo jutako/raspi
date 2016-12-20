@@ -279,7 +279,7 @@ def main():
                             hum_hist.insert(0, hum)
 
                             # send email warning
-                            if (np.median(temp_hist) < TEMP_ALARM_TH) | (np.median(hum_hist) > HUM_ALARM_TH) & ((time.time() - last_temphum_email_ts) > TEMPHUM_ALARM_INTERVAL_SEC):
+                            if ((np.median(temp_hist) < TEMP_ALARM_TH) | (np.median(hum_hist) > HUM_ALARM_TH)) & ((time.time() - last_temphum_email_ts) > TEMPHUM_ALARM_INTERVAL_SEC):
                                 msg = createMultipartEMail(from_email, to_email,
                                 'Mokinhenki tiedottaa: liian kylmaa tai kosteaa',
                                 'Majassani on liian kylmaa tai kosteaa. Lampotila on %2.1f astetta ja suht. kosteus %2.1f prosenttia. Tee jotain.' % (temp, hum) )
