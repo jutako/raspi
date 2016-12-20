@@ -125,15 +125,14 @@ def main():
     while True:
         
         [temp, hum] = grovepi.dht(4, 1) #D4 input, the white version  
-        print("temp = %.02f C humidity =%.02f%%"%(temp, hum))        
+                
         
 		# Try to grab a sensor reading.  Use the read_retry method which will retry up
 		# to 15 times to get a sensor reading (waiting 2 seconds between each retry).
         hum2_old = hum2
         temp2_old = temp2
         hum2, temp2 = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
-        print("temp = %.02f C humidity =%.02f%%"%(temp2, hum2)) 
-
+            
 		# Note that sometimes you won't get a reading and
 		# the results will be null (because Linux can't
 		# guarantee the timing of calls to read the sensor).
@@ -142,7 +141,9 @@ def main():
             hum2 = hum2_old
             temp2 = temp2_old
         
-        if (-40 < temp) & (temp < 50) & (0 < hum) & (hum < 100):
+        if all(x is not None for x in [temp, hum, temp2, hum2]) & (-40 < temp) & (temp < 50) & (0 < hum) & (hum < 100):
+			print("temp = %.02f C humidity =%.02f%%"%(temp, hum))
+			print("temp = %.02f C humidity =%.02f%%"%(temp2, hum2))
 			sendData(THINGSPEAKURL, THINGSPEAKKEY, temp, hum, temp2, hum2)
 			sys.stdout.flush()
 		
