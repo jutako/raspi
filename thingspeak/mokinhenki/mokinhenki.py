@@ -157,7 +157,7 @@ def createMultipartEMail(from_email, to_email, subjectline, message):
     App token needs to be provided, since I do not dare to hard code it into this public code."""
 def sendGMail(msg, google_app_token):
 	server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-    status = [None] * 2
+	status = [None] * 2
 	status[0] = server.login('jussitapiokorpela@gmail.com', google_app_token)
 	status[1] = server.sendmail(msg['from'], msg['to'], msg.as_string())
 	server.quit()
