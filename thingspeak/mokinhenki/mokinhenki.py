@@ -150,6 +150,7 @@ def createMultipartEMail(from_email, to_email, subjectline, message):
     msg['To'] = ",".join(to_email)
     #msg['Date'] = formatdate(localtime=True)
     msg.attach(MIMEText(message))
+    return msg
 
 
 """ Sends email using smtp.gmail.com. Authentication needs an App token since I use two-factor authentication. 
