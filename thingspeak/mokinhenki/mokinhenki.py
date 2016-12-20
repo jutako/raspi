@@ -148,7 +148,7 @@ def createMultipartEMail(from_email, to_email, subjectline, message):
     msg['Subject'] = subjectline
     msg['From'] = from_email
     msg['To'] = ",".join(to_email)
-    msg['Date'] = formatdate(localtime=True)
+    #msg['Date'] = formatdate(localtime=True)
     msg.attach(MIMEText(message))
 
 
