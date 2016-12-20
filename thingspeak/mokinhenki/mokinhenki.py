@@ -33,6 +33,7 @@ import glob #to get lists of files etc.
 import urllib            # URL functions
 import urllib2           # URL functions
 import random #for testing
+import numpy as np #for simple computations such as median
 
 # Modules for building email
 from email.mime.text import MIMEText
@@ -56,6 +57,9 @@ LOGFILE = os.path.join(OUTPATH, 'log_mokinhenki.txt')
 from_email = 'jussitapiokorpela@gmail.com' #seems to make no difference what this is...
 to_email = ['jussikorpela@hotmail.com']
 app_token_file = '/home/pi/private/google_app_token'
+
+TEMP_ALARM_TH = 20
+HUM_ALARM_TH = 70
 
 AUTOSHUTDOWN  = 1    # Set to 1 to shutdown on switch
 THINGSPEAKKEY = 'WUKJPVAXWTTYQTFM' #channel: ""
@@ -184,8 +188,10 @@ def main():
 
     # initialize
     last_temphum_ts = time.time()
-    hum2 = 0
-    temp2 = -100
+    hum = 0
+    temp = -100
+    hum_hist = [None] * 5
+    temp_hist = [None] * 5
 
     # Load google app token from file
     fp = open(app_token_file, 'r')
@@ -246,27 +252,40 @@ def main():
             
             # Try to grab a sensor reading.  Use the read_retry method which will retry up
             # to 15 times to get a sensor reading (waiting 2 seconds between each retry).
-            hum2_old = hum2
-            temp2_old = temp2
-            hum2, temp2 = Adafruit_DHT.read_retry(DHT_SENSOR, PIN_DHT22)
+            hum_old = hum
+            temp_old = temp
+            hum, temp = Adafruit_DHT.read_retry(DHT_SENSOR, PIN_DHT22)
                 
             # Note that sometimes you won't get a reading and
             # the results will be null (because Linux can't
             # guarantee the timing of calls to read the sensor).
             # If this happens try again!
-            if hum2 is None or temp2 is None:
-                hum2 = hum2_old
-                temp2 = temp2_old
+            if hum is None or temp is None:
+                hum = hum_old
+                temp = temp_old
             
-            if all(x is not None for x in [temp2, hum2]) & (-40 < temp2) & (temp2 < 50) & (0 < hum2) & (hum2 < 100):
-                            print("temp = %.02f C humidity =%.02f%%"%(temp2, hum2))
-                            sendData(THINGSPEAKURL, THINGSPEAKKEY, temp2, hum2)
+            if all(x is not None for x in [temp, hum]) & (-40 < temp) & (temp < 50) & (0 < hum) & (hum < 100):
+                            print("temp = %.02f C humidity =%.02f%%"%(temp, hum))
+                            sendData(THINGSPEAKURL, THINGSPEAKKEY, temp, hum)
                             sys.stdout.flush()
+
+                            # update history records: pop last element and add new to position 0
+                            temp_hist.pop()
+                            temp_hist.insert(0, temp)
+                            hum_hist.pop()
+                            hum_hist.insert(0, hum)
+
+                            # send email warning
+                            if (np.median(temp_hist) < TEMP_ALARM_TH) | (np.median(hum_hist) > HUM_ALARM_TH) & ((time.time() - last_temphum_ts) > 5*60):
+                                msg = createMultipartEMail(from_email, to_email,
+                                'Mokinhenki tiedottaa: liian kylmää tai kosteaa',
+                                'Majassani on liian kylmää tai kosteaa. Lämpötila %2.1f C ja suht. kosteus %2.1f prosenttia. Tee jotain.' % (temp, hum) )
+                                status = sendGMail(msg, app_token)
+                                last_temphum_email_ts = time.time()
+
                             last_temphum_ts = time.time()
 
 
-   
-	
         time.sleep(0.5) #for the while loop
 
 
