@@ -28,9 +28,8 @@ import RPi.GPIO as GPIO
 GPIO.setmode(GPIO.BCM)
 
 # Define GPIO signals to use
-# Physical pins 11,15,16,18
-# GPIO17,GPIO22,GPIO23,GPIO24
-StepPins = [6,13,19,26]
+# GPIO6,GPIO13,GPIO19,GPIO26
+StepPins = [6,13,19,26] # correspond driver pin order [1,2,3,4]
 
 # Set all pins as output
 for pin in StepPins:
@@ -64,14 +63,14 @@ StepCounter = 0
 
 # Start main loop
 while True:
-
-  print StepCounter,
-  print Seq[StepCounter]
+#for jussi in range(0, 64*64): #about one revolution: 64 steps per revolution + gear ratio 1/64
+  #print StepCounter,
+  #print Seq[StepCounter]
 
   for pin in range(0, 4):
     xpin = StepPins[pin]
     if Seq[StepCounter][pin]!=0:
-      print " Enable GPIO %i" %(xpin)
+      #print " Enable GPIO %i" %(xpin)
       GPIO.output(xpin, True)
     else:
       GPIO.output(xpin, False)
