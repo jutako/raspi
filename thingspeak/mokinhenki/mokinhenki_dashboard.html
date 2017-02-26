@@ -1,0 +1,167 @@
+<!DOCTYPE HTML>
+<meta charset=utf-8> <!-- to make scandinavian characters display properly -->
+<html height="100%">
+<head>
+    <!-- 
+        A HMTL dashboard to ThingSpeak thing https://thingspeak.com/channels/198749
+    -->
+    <title>Mökinhenki</title>
+
+	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.4/jquery.min.js"></script> 
+    <!--  <script src="https://code.jquery.com/jquery-1.10.2.js"></script> -->
+	<!-- <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js"></script> -->
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+</head>
+
+<body height="100%">
+
+	<h2>Mökinhenki raportoi seuraavaa:</h2>
+	<div id="date_tag"> Odotetaan dataa ... </div>
+	<div id="chart_div" style="width: 800px; height: 300px;"></div>
+    <div id="chart_div2" style="width: 800px; height: 300px;"></div>
+    <div id="footer">
+        <p> Tiedot päivittyvät minuutin välein. <br>
+            Mahdollinen punainen teksti merkitsee sitä, että viimeisin mittaus on yli 2 minuuttia vanha. </p>
+    </div>
+
+    
+	<script type="text/javascript">  // utilities and draw data
+
+		google.charts.load('current', {packages: ['corechart', 'line']});
+		google.charts.setOnLoadCallback(drawChart);
+
+        // Pick temperature data from thingspeak JSON
+        function parseTemp(json_data){
+            //get datetime and numeric data
+            var gdata_array = [];
+            var value_array = [];
+            for (i = 0; i < json_data.feeds.length; i++) {
+                var cdt = new Date(json_data.feeds[i].created_at);
+                gdata_array.push( [[cdt.getHours(), cdt.getMinutes(), cdt.getSeconds()], Number(json_data.feeds[i].field1) ]);
+                value_array.push( Number(json_data.feeds[i].field1) );
+            }
+            return [gdata_array, cdt, value_array]; //cdt contains largest datetime
+        }
+
+        // Pick humidity data from thingspeak JSON
+        function parseHum(json_data){
+            //get datetime and numeric data
+            var gdata_array = [];
+            var value_array = [];
+            for (i = 0; i < json_data.feeds.length; i++) {
+                var cdt = new Date(json_data.feeds[i].created_at);
+                gdata_array.push( [[cdt.getHours(), cdt.getMinutes(), cdt.getSeconds()], Number(json_data.feeds[i].field2) ]);
+                value_array.push( Number(json_data.feeds[i].field2) );
+            }
+            return [gdata_array, cdt, value_array]; //cdt contains largest datetime
+        }
+
+        // Get axis limits for a set of values
+        function getAxisLimits(value_array){
+            var min_value = Math.min.apply(Math, value_array);
+            var max_value = Math.max.apply(Math, value_array);
+            var value_range = [min_value, max_value];
+            if ( (value_range[1] - value_range[0]) < 1){
+                value_range = [min_value - 0.5, max_value + 0.5];
+            };
+            return value_range;
+        }
+
+        // Set chart options (needed mainly to update vRange as new data comes in)
+        function setChartOptions(hTitle, vTitle, vRange){
+             var options = {
+                        pointSize: 3,
+                        hAxis: {
+                            title: hTitle
+                        },
+                        vAxis: {
+                            title: vTitle,
+                            viewWindow: {
+                                min: Math.floor(vRange[0]),
+                                max: Math.ceil(vRange[1])
+                            }
+                        }
+                    };
+
+            return options;
+        }
+
+        // Chart drawing & updates via setInterval()
+		function drawChart() {
+			$.getJSON( 'https://api.thingspeak.com/channels/198749/feeds.json?key=7S4GS31FAANOMBPS&results=20',
+				function( data ) {
+
+                    // draw temperature
+                    var temp_elements = parseTemp(data);
+                    var temp_range = getAxisLimits( temp_elements[2] );
+                    var gdata = new google.visualization.DataTable();
+                    gdata.addColumn('timeofday', 'time');
+                    gdata.addColumn('number', 'temp');
+                    gdata.addRows(temp_elements[0]);
+                    var options = setChartOptions('Aika (hh:mm)', 'Lämpötila (C)', temp_range);
+                    var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
+                    chart.draw(gdata, options);
+
+                    // draw humidity
+                    var hum_elements = parseHum(data);
+                    var hum_range = getAxisLimits( hum_elements[2] );
+                    var gdata2 = new google.visualization.DataTable();
+                    gdata2.addColumn('timeofday', 'time');
+                    gdata2.addColumn('number', 'hum');
+                    gdata2.addRows(hum_elements[0]);
+                    var options2 = setChartOptions('Aika (hh:mm)', 'Suhteellinen kosteus(%)', hum_range);
+                    var chart2 = new google.visualization.LineChart(document.getElementById('chart_div2'));
+                    chart2.draw(gdata2, options2);
+
+                    // insert line about last entry
+                    var mystr = "Viimeisin kirjaus: ";
+                    $( "#date_tag" ).empty();
+                    $( "#date_tag" ).append( mystr.concat(temp_elements[1].toString()) );
+
+                    // update charts
+					setInterval(
+						function() {
+								$.getJSON( 'https://api.thingspeak.com/channels/198749/feeds.json?key=7S4GS31FAANOMBPS&results=20',
+											function( data ) { 
+
+                                                // Update temp
+                                                temp_elements = parseTemp(data);
+                                                temp_range = getAxisLimits( temp_elements[2] );
+                                                gdata.removeRows(0, gdata.getNumberOfRows());
+                                                gdata.addRows(temp_elements[0]);
+                                                options = setChartOptions('Aika (hh:mm)', 'Lämpötila (C)', temp_range);
+												chart.draw(gdata, options);
+
+                                                // Update hum
+                                                hum_elements = parseHum(data);
+                                                hum_range = getAxisLimits( hum_elements[2] );
+                                                gdata2.removeRows(0, gdata2.getNumberOfRows());
+                                                gdata2.addRows(hum_elements[0]);
+                                                options2 = setChartOptions('Aika (hh:mm)', 'Suhteellinen kosteus(%)', hum_range);
+												chart2.draw(gdata2, options2);
+
+                                                // Update last entry
+                                                mystr = "Viimeisin kirjaus: ";
+                                                $( "#date_tag" ).empty();
+                                                $( "#date_tag" ).append( mystr.concat(temp_elements[1].toString()) );
+
+                                                // Turn last entry text red if data is not fresh enough
+                                                var currentdate = new Date();
+                                                if ( 2*60 < (currentdate.getTime() - temp_elements[1].getTime())/1000 ) {
+                                                    $( "#date_tag" ).css('color', 'red');
+                                                };
+
+											});
+							},
+						60*1000); //end of setInterval()
+                    
+					
+				} //end of getJSON custom data handler
+            ); //end of getJSON()
+		} //end of drawChart()
+	</script>
+
+
+</body>
+</html>
+
