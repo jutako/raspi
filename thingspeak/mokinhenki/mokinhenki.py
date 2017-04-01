@@ -110,7 +110,7 @@ def sendData(url, key, temp, hum):
         response.close()
         log = log + 'Update ' + html_string
 
-    except urllib2.HTTPError, e:
+    except urllib2.HTTPError as e:
         log = log + 'Server could not fulfill the request. Error code: ' + str(e.code)
         
         """
@@ -124,7 +124,7 @@ def sendData(url, key, temp, hum):
 		TypeError: cannot concatenate 'str' and 'int' objects
         """
         
-    except urllib2.URLError, e:
+    except urllib2.URLError as e:
         log = log + 'Failed to reach server. Reason: ' + str(e.reason)
         """
         TODO: Find a way to avoid this: 
@@ -139,8 +139,8 @@ def sendData(url, key, temp, hum):
 		TypeError: cannot concatenate 'str' and 'gaierror' objects
 		"""
         
-    except:
-        log = log + 'Unknown error'
+    except e:
+        log = log + 'sendData error. Reason: ' + sys.exc_info()[0]
 
     print log
     

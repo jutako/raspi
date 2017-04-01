@@ -1,0 +1,12 @@
+
+# Creating time lapse videos from Linux command line
+
+
+mencoder  "mf://*.jpg" -o movie.avi -ovc lavc -lavcopts vcodec=mjpeg
+
+cat *.jpg | ffmpeg -f image2pipe -r 1 -vcodec mjpeg -i - -vcodec libx264 out.mp4
+
+Option -r can be used to adjust how fast the images "run".
+
+for 1 image/min -r 7 is quite good
+for 2 images/min -r xx is quite good
