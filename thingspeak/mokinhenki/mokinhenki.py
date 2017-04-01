@@ -139,7 +139,7 @@ def sendData(url, key, temp, hum):
 		TypeError: cannot concatenate 'str' and 'gaierror' objects
 		"""
         
-    except e:
+    except:
         log = log + 'sendData error. Reason: ' + sys.exc_info()[0]
 
     print log
@@ -172,7 +172,7 @@ def sendGMail(msg, google_app_token):
         server.quit()
         log = log + 'Send mail notification.'
     
-    except e:
+    except:
         log = log + 'sendData error. Reason: ' + sys.exc_info()[0]
 
     print log
