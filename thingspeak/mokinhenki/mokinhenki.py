@@ -59,7 +59,7 @@ from_email = 'jussitapiokorpela@gmail.com' #seems to make no difference what thi
 to_email = ['jussikorpela@hotmail.com']
 app_token_file = '/home/pi/private/google_app_token'
 
-TEMP_ALARM_TH = 20
+TEMP_ALARM_TH = 10
 HUM_ALARM_TH = 70
 
 AUTOSHUTDOWN  = 1    # Set to 1 to shutdown on switch
