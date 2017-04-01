@@ -176,11 +176,10 @@ def sendGMail(msg, google_app_token):
         log = log + 'sendData error. Reason: ' + sys.exc_info()[0]
 
     print log
-    
     with open(LOGFILE, 'a') as file:
-		file.write(log + '\n')
+	    file.write(log + '\n')
 
-	return status
+    return status
 
 
 """ Main program """
