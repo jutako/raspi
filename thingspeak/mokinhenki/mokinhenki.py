@@ -162,11 +162,24 @@ def createMultipartEMail(from_email, to_email, subjectline, message):
 """ Sends email using smtp.gmail.com. Authentication needs an App token since I use two-factor authentication. 
     App token needs to be provided, since I do not dare to hard code it into this public code."""
 def sendGMail(msg, google_app_token):
-	server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-	status = [None] * 2
-	status[0] = server.login('jussitapiokorpela@gmail.com', google_app_token)
-	status[1] = server.sendmail(msg['from'], msg['to'], msg.as_string())
-	server.quit()
+    status = [None] * 2
+    global LOGFILE
+
+    try:
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        status[0] = server.login('jussitapiokorpela@gmail.com', google_app_token)
+        status[1] = server.sendmail(msg['from'], msg['to'], msg.as_string())
+        server.quit()
+        log = log + 'Send mail notification.'
+    
+    except e:
+        log = log + 'sendData error. Reason: ' + sys.exc_info()[0]
+
+    print log
+    
+    with open(LOGFILE, 'a') as file:
+		file.write(log + '\n')
+
 	return status
 
 
