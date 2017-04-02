@@ -163,6 +163,7 @@ def createMultipartEMail(from_email, to_email, subjectline, message):
     App token needs to be provided, since I do not dare to hard code it into this public code."""
 def sendGMail(msg, google_app_token):
     status = [None] * 2
+    log = time.strftime("%d-%m-%Y,%H:%M:%S") 
     global LOGFILE
 
     try:
