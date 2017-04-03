@@ -40,6 +40,11 @@ import time
 import math #for dht sensor
 import grovepi #for general grovepi
 import SI1145 #for I2C sunlight sensor
+import raspitools as rpit #my own set of tools
+
+THINGSPEAKKEY = '8QQ12B7Q5YSZ355T' #channel: "kasvuboksi"
+THINGSPEAKURL = 'https://api.thingspeak.com/update'
+LOGINTERVAL = 60 #in seconds
 
 # Connect the Grove Moisture Sensor to analog port A0
 # SIG,NC,VCC,GND
@@ -67,6 +72,7 @@ PORT_RELAY_1 = 3
 grovepi.pinMode(PORT_RELAY_1, "OUTPUT")
 
 
+time_since_last_log = 0;
 while True:
     try:
 
@@ -98,8 +104,10 @@ while True:
         print('')
 
         # Analog moisture sensors x2
-        print('Sensor at A0: ' + str(grovepi.analogRead(PORT_MOISTURE_1)) + '\n')
-        print('Sensor at A1: ' + str(grovepi.analogRead(PORT_MOISTURE_2)) + '\n')
+        moisture_1 = grovepi.analogRead(PORT_MOISTURE_1)
+        moisture_2 = grovepi.analogRead(PORT_MOISTURE_2)
+        print('Moisture at A0: ' + str(moisture_1) + '\n')
+        print('Moisture at A1: ' + str(moisture_2) + '\n')
 
 
         # This example uses the blue colored sensor. 
@@ -107,22 +115,29 @@ while True:
         [temp,humidity] = grovepi.dht(PORT_DHT, DHT_TYPE)
         # Reading dht messes up moisture readings, tried many ports. Works better if moisture is read first. Maybe sleeping time helps as well.
         if math.isnan(temp) == False and math.isnan(humidity) == False:
-            print("temp = %.02f C humidity =%.02f%%\n" % (temp, humidity))
+            print("temperature: %.02f C, humidity: %.02f%%\n" % (temp, humidity))
 
         # Relay
         # switch on for 5 seconds
         if temp > 23:
             grovepi.digitalWrite(PORT_RELAY_1, 1)
-            print ("relay on")
+            relay_state = 1;
+            print ("relay: on")
 
         else:
             # switch off for 5 seconds
             grovepi.digitalWrite(PORT_RELAY_1, 0)
-            print ("relay off")
+            relay_state = 0;
+            print ("relay: off")
 
+        if time_since_last_log > LOGINTERVAL:
+            value_dict = {'field1': temp, 'field2': humidity, 'field3': vis , 'field4':  IR, 'field5': moisture_1, 'field6': moisture_2, 'field7': relay_state, 'field8': 999}
+            rpit.sendData(THINGSPEAKURL, THINGSPEAKKEY, value_dict)
+            time_since_last_log = 0;
 
         print('#############################################')
         time.sleep(3)
+        time_since_last_log = time_since_last_log + 3;
 
     except KeyboardInterrupt:
         break
