@@ -142,5 +142,7 @@ while True:
     except KeyboardInterrupt:
         break
 
-    except IOError:
-        print ("Error")
+    except:
+        exctype, value = sys.exc_info()[:2]
+        log = 'Loop error: ' + str(value)
+        print(log)
