@@ -42,6 +42,8 @@ import grovepi #for general grovepi
 import SI1145 #for I2C sunlight sensor
 import raspitools as rpit #my own set of tools
 
+LOOP_SLEEP = 10
+
 THINGSPEAKKEY = '8QQ12B7Q5YSZ355T' #channel: "kasvuboksi"
 THINGSPEAKURL = 'https://api.thingspeak.com/update'
 LOGINTERVAL = 60 #in seconds
@@ -136,8 +138,8 @@ while True:
             time_since_last_log = 0;
 
         print('#############################################')
-        time.sleep(3)
-        time_since_last_log = time_since_last_log + 3;
+        time.sleep(LOOP_SLEEP)
+        time_since_last_log = time_since_last_log + LOOP_SLEEP;
 
     except KeyboardInterrupt:
         break

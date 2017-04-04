@@ -99,7 +99,8 @@ def sendData(url, api_key, value_dict):
         log = log + ' update ' + html_string
         
     except:
-        log = log + 'sendData error. Reason: ' + sys.exc_info()[0]
+        exctype, value = sys.exc_info()[:2]
+        log = log + 'sendData error. Reason: ' + str(value)
 
     return log
 
@@ -130,7 +131,8 @@ def sendGMail(msg, google_app_token):
         log = log + 'Send mail notification.'
     
     except:
-        log = log + 'sendData error. Reason: ' + sys.exc_info()[0]
+        exctype, value = sys.exc_info()[:2]
+        log = log + 'sendData error. Reason: ' + str(value)
 
     print log
     with open(LOGFILE, 'a') as file:
