@@ -60,7 +60,7 @@ if not os.path.exists(OUTPATH_FIG):
 LOGFILE = os.path.join(OUTPATH, 'log_mokinhenki.txt')
 
 from_email = 'jussitapiokorpela@gmail.com' #seems to make no difference what this is...
-to_email = ['jussikorpela@hotmail.com']
+to_email = ['pirkko.k.korpela@gmail.com']
 app_token_file = '/home/pi/private/google_app_token'
 
 TEMP_ALARM_TH = -20
