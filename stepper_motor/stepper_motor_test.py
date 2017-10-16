@@ -56,14 +56,14 @@ StepDir = 1 # Set to 1 or 2 for clockwise
 if len(sys.argv)>1:
   WaitTime = int(sys.argv[1])/float(1000)
 else:
-  WaitTime = 10/float(1000)
+  WaitTime = 1/float(1000)
 
 # Initialise variables
 StepCounter = 0
 
 # Start main loop
-while True:
-#for jussi in range(0, 64*64): #about one revolution: 64 steps per revolution + gear ratio 1/64
+#while True:
+for jussi in range(0, int(0.25*64*64)): #about one revolution: 64 steps per revolution + gear ratio 1/64
   #print StepCounter,
   #print Seq[StepCounter]
 
