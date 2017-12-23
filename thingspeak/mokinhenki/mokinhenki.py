@@ -24,6 +24,7 @@
 # * make log machine readable
 # * make a more verbose human readable log as well
 # * save pictures and log to cloud
+# * add newline to google app token file
 
 #import smbus
 import time
@@ -47,7 +48,7 @@ import Adafruit_DHT #for DHT11 and DHT22 sensors
 import RPi.GPIO as GPIO #for PIR pin read
 from picamera import PiCamera #for camera 
 
-
+import dropbox #sudo pip2 install dropbox
 
 ################# Default Constants #################
 # These can be changed if required
@@ -62,6 +63,7 @@ LOGFILE = os.path.join(OUTPATH, 'log_mokinhenki.txt')
 from_email = 'jussitapiokorpela@gmail.com' #seems to make no difference what this is...
 to_email = ['pirkko.k.korpela@gmail.com']
 app_token_file = '/home/pi/private/google_app_token'
+dbx_oauth2_token_file = '/home/pi/private/dbx_accesstoken_mokinhenki'
 
 TEMP_ALARM_TH = -20
 HUM_ALARM_TH = 100
@@ -188,6 +190,29 @@ def sendGMail(msg, google_app_token):
 
     return status
 
+# Read token from file (read first line, assuming no line break)
+def read_token(app_token_file):
+    fp = open(app_token_file, 'r')
+    app_token = fp.readline()
+    app_token = app_token[0:-1] #remove \n
+    fp.close()    
+    return app_token
+
+# A class to interact with Dropbox
+class DbxTransferData:
+    
+    # Contstructor
+    def __init__(self, access_token):
+        self.access_token = access_token
+
+    # Upload file using Dropbox API v2
+    def upload_file(self, file_from, file_to):
+        """upload a file to Dropbox using API v2
+        """
+        dbx = dropbox.Dropbox(self.access_token)
+
+        with open(file_from, 'rb') as f:
+            dbx.files_upload(f.read(), file_to)
 
 """ Main program """
 def main():
@@ -215,11 +240,16 @@ def main():
     hum_hist = [HUM_ALARM_TH - 1] * 5
     temp_hist = [TEMP_ALARM_TH + 1] * 5
 
+    # Read needed oauth tokens from files
     # Load google app token from file
-    fp = open(app_token_file, 'r')
-    app_token = fp.readline()
-    #app_token = app_token[0:-1] #remove \n
-    fp.close()
+    # fp = open(app_token_file, 'r')
+    # app_token = fp.readline()
+    # #app_token = app_token[0:-1] #remove \n
+    # fp.close()
+
+    app_token = read_token(app_token_file)
+    dbx_oauth2_token = read_token(dbx_oauth2_token_file)
+    dbx = DbxTransferData(dbx_oauth2_token)
 
     while True:
 
@@ -236,6 +266,8 @@ def main():
                 fname = os.path.join(OUTPATH_FIG, "pirimage_%s.jpg" % (tstr))
                 
                 camera.capture(fname)
+
+                # Notify using GMail
 
                 # Create email
                 msg = createMultipartEMail(from_email, to_email,
@@ -254,6 +286,10 @@ def main():
                 #time.sleep(3) #sleep until PIR is ready again
                 #camera.stop_preview()
 
+                # Save to dropbox
+                file_to = os.path.join('/figs/pir/', os.path.basename(fname))
+                dbx.upload_file(fname, file_to)
+
 
             # Take picture based on time of day
             curts = time.localtime()
@@ -263,6 +299,11 @@ def main():
                 fname = os.path.join(OUTPATH_FIG, "dayimage_%s.jpg" % (tstr))
                 camera.capture(fname)
                 day_pic_taken = True
+             
+                # path to upload the file to, including the file name
+                # saves to dropbox under Apps/mokinhenki/
+                file_to = os.path.join('/figs/daily/', os.path.basename(fname))
+                dbx.upload_file(fname, file_to)
 
             if (curts[3]==12) & (curts[4]==1):
                 day_pic_taken = False #reset flag
