@@ -52,11 +52,15 @@ from picamera import PiCamera #for camera
 ################# Default Constants #################
 # These can be changed if required
 OUTPATH = '/home/pi/data/mokinhenki'
+if not os.path.exists(OUTPATH):
+	os.makedirs(OUTPATH)
 OUTPATH_FIG = os.path.join(OUTPATH, 'figs')
+if not os.path.exists(OUTPATH_FIG):
+	os.makedirs(OUTPATH_FIG)
 LOGFILE = os.path.join(OUTPATH, 'log_mokinhenki.txt')
 
 from_email = 'jussitapiokorpela@gmail.com' #seems to make no difference what this is...
-to_email = ['jussikorpela@hotmail.com']
+to_email = ['pirkko.k.korpela@gmail.com']
 app_token_file = '/home/pi/private/google_app_token'
 
 TEMP_ALARM_TH = -20
@@ -201,7 +205,7 @@ def main():
 
     #camera.start_preview()
     #sleep(20)
-    #camera.stop_preview()
+    #camera.stop_preview() 
 
     # initialize
     last_temphum_ts = time.time()
@@ -214,7 +218,7 @@ def main():
     # Load google app token from file
     fp = open(app_token_file, 'r')
     app_token = fp.readline()
-    app_token = app_token[0:-1] #remove \n
+    #app_token = app_token[0:-1] #remove \n
     fp.close()
 
     while True:

@@ -41,6 +41,8 @@ import math #for dht sensor
 import grovepi #for general grovepi
 import SI1145 #for I2C sunlight sensor
 import raspitools as rpit #my own set of tools
+import sys
+import pdb
 
 LOOP_SLEEP = 10
 
@@ -70,8 +72,9 @@ PORT_DHT = 5  # The Sensor goes on digital port
 DHT_TYPE = 1 # 0 -> blue colored sensor, 1 -> white colored sensor
 
 
-PORT_RELAY_1 = 3
+PORT_RELAY_1 = 7
 grovepi.pinMode(PORT_RELAY_1, "OUTPUT")
+FAN_SWITCH_TEMP = 22
 
 
 time_since_last_log = 0;
@@ -106,8 +109,11 @@ while True:
         print('')
 
         # Analog moisture sensors x2
-        moisture_1 = grovepi.analogRead(PORT_MOISTURE_1)
-        moisture_2 = grovepi.analogRead(PORT_MOISTURE_2)
+        #pdb.set_trace()
+        moisture_1 = 0
+        moisture_2 = 0
+        #moisture_1 = grovepi.analogRead(PORT_MOISTURE_1)
+        #moisture_2 = grovepi.analogRead(PORT_MOISTURE_2)
         print('Moisture at A0: ' + str(moisture_1) + '\n')
         print('Moisture at A1: ' + str(moisture_2) + '\n')
 
@@ -121,7 +127,7 @@ while True:
 
         # Relay
         # switch on for 5 seconds
-        if temp > 23:
+        if temp > FAN_SWITCH_TEMP:
             grovepi.digitalWrite(PORT_RELAY_1, 1)
             relay_state = 1;
             print ("relay: on")
@@ -145,6 +151,8 @@ while True:
         break
 
     except:
+        #pdb.set_trace()
         exctype, value = sys.exc_info()[:2]
         log = 'Loop error: ' + str(value)
         print(log)
+        time.sleep(10)
