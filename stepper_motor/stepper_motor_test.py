@@ -17,6 +17,7 @@
 # http://www.raspberrypi-spy.co.uk/
 #
 #--------------------------------------
+# Example code showcasing how to control 28BYJ-48 Stepper Motor with ULN2003 driver board.
 
 # Import required libraries
 import sys
