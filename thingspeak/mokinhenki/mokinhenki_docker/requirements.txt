@@ -1,0 +1,4 @@
+numpy
+RPi.GPIO
+picamera
+dropbox
